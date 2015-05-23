@@ -9,28 +9,42 @@ module WickedPdfHelper
     (File.extname(filename.to_s)[1..-1] == extension) ? filename : "#{filename}.#{extension}"
   end
 
+#  def wicked_pdf_stylesheet_link_tag(*sources)
+#    css_dir = WickedPdfHelper.root_path.join('public', 'stylesheets')
+#    css_text = sources.collect { |source|
+#      source = WickedPdfHelper.add_extension(source, 'css')
+#      "<style type='text/css'>#{File.read(css_dir.join(source))}</style>"
+#    }.join("\n")
+#   css_text.respond_to?(:html_safe) ? css_text.html_safe : css_text
+#  end
+  
   def wicked_pdf_stylesheet_link_tag(*sources)
-    css_dir = WickedPdfHelper.root_path.join('public', 'stylesheets')
-    css_text = sources.collect { |source|
-      source = WickedPdfHelper.add_extension(source, 'css')
-      "<style type='text/css'>#{File.read(css_dir.join(source))}</style>"
-    }.join("\n")
-    css_text.respond_to?(:html_safe) ? css_text.html_safe : css_text
+    sources.collect { |source|
+      "<style type='text/css'>#{Rails.application.assets.find_asset("#{source}.css")}</style>"
+    }.join("\n").gsub(/url\(['"](.+)['"]\)(.+)/,%[url("#{wicked_pdf_image_location("\\1")}")\\2]).html_safe
   end
-
+  
   def wicked_pdf_image_tag(img, options = {})
     image_tag "file:///#{WickedPdfHelper.root_path.join('public', 'images', img)}", options
   end
 
-  def wicked_pdf_javascript_src_tag(jsfile, options = {})
-    jsfile = WickedPdfHelper.add_extension(jsfile, 'js')
-    src = "file:///#{WickedPdfHelper.root_path.join('public', 'javascripts', jsfile)}"
-    content_tag('script', '', { 'type' => Mime::JS, 'src' => path_to_javascript(src) }.merge(options))
+  # def wicked_pdf_javascript_src_tag(jsfile, options = {})
+  #   jsfile = WickedPdfHelper.add_extension(jsfile, 'js')
+  #   src = "file:///#{WickedPdfHelper.root_path.join('public', 'javascripts', jsfile)}"
+  #   content_tag('script', '', { 'type' => Mime::JS, 'src' => path_to_javascript(src) }.merge(options))
+  # end
+  
+  def wicked_pdf_javascript_src_tag(source)
+    "<script type='text/javascript'>#{Rails.application.assets.find_asset("#{source}.js").body}</script>"
   end
-
+  
+  # def wicked_pdf_javascript_include_tag(*sources)
+  #   js_text = sources.collect { |source| wicked_pdf_javascript_src_tag(source, {}) }.join("\n")
+  #   js_text.respond_to?(:html_safe) ? js_text.html_safe : js_text
+  # end
+  
   def wicked_pdf_javascript_include_tag(*sources)
-    js_text = sources.collect { |source| wicked_pdf_javascript_src_tag(source, {}) }.join("\n")
-    js_text.respond_to?(:html_safe) ? js_text.html_safe : js_text
+    sources.collect{ |source| wicked_pdf_javascript_src_tag(source) }.join("\n").html_safe
   end
 
   module Assets
